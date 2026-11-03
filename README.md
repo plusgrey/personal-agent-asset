@@ -40,16 +40,36 @@ personal-agent-asset/
 │
 ├── hooks/                      # 生命周期 hook 脚本（目前主要用于 Claude Code）
 │
-├── adapters/                   # 各工具的安装逻辑与格式转换
+├── adapters/                   # 各工具的安装逻辑，每个工具一个 install.sh
 │   ├── claude-code/            # → ~/.claude/{skills,commands,agents,CLAUDE.md}
 │   ├── codex/                  # → ~/.codex/{skills,prompts,AGENTS.md,config.toml}
-│   ├── cursor/                 # → ~/.cursor/{skills,commands,mcp.json} + rules
-│   └── trae/                   # → Trae 对应目录
+│   ├── cursor/                 # → ~/.cursor/{skills,commands,agents,mcp.json}
+│   └── trae/                   # → Trae 对应目录（待实现）
+│
+├── lib/
+│   └── common.sh               # 安装公共函数：软链/复制、备份、卸载、dry-run
 │
 └── scripts/                    # 仓库维护工具
     ├── new-skill.sh            # 从模板创建新 skill
-    └── validate.sh             # 校验 SKILL.md frontmatter 等
+    ├── validate.sh             # 校验 SKILL.md frontmatter、脚本语法
+    └── templates/              # 新建资产用的模板
 ```
+
+### Adapter 约定
+
+每个 `adapters/<tool>/install.sh` 会被 `install.sh` source，只需实现三个函数：
+
+```bash
+adapter_name()   { echo "Tool Name"; }          # 展示名
+adapter_detect() { [ -d "$HOME/.tool" ]; }      # 本机是否安装了该工具
+adapter_apply()  {                              # 同步资产
+  sync_children "$REPO_ROOT/skills" "$HOME/.tool/skills"     # 目录下每个子项各建一个链接
+  sync_item     "$REPO_ROOT/rules/AGENTS.md" "$HOME/.tool/AGENTS.md"  # 单个文件
+}
+```
+
+`sync_*` 会自动处理安装/卸载、软链/复制、dry-run。如果目标位置已经有一个不归本仓库管理的文件，
+会先备份成 `*.bak.<时间戳>` 再覆盖；卸载时只删除指向本仓库的软链接。
 
 > 各工具的具体安装路径以 `adapters/<tool>/` 中的实现为准，工具升级后路径如有变化只需改 adapter。
 
@@ -64,17 +84,20 @@ personal-agent-asset/
 | `mcp/servers.json` | `claude mcp add` / `~/.claude.json` | `~/.codex/config.toml` | `~/.cursor/mcp.json` |
 | `hooks/` | `~/.claude/settings.json` | — | — |
 
-## 使用方式（规划中）
+## 使用方式
 
 ```bash
 git clone git@github.com:plusgrey/personal-agent-asset.git ~/personal-agent-asset
 cd ~/personal-agent-asset
 
-./install.sh all        # 安装到所有检测到的工具
-./install.sh claude     # 只安装到 Claude Code
-./install.sh --copy     # 用复制代替软链接
+./install.sh                # 安装到本机检测到的所有工具（等同 all）
+./install.sh claude codex   # 只安装到指定工具
+./install.sh --dry-run      # 只打印将要执行的操作，不做任何修改
+./install.sh --copy         # 复制文件，不建软链接
+./install.sh --uninstall    # 删除本仓库创建的软链接
+./install.sh --force trae   # 未检测到该工具时也强制安装
 
-git pull                # 软链接模式下，拉取即更新
+git pull                    # 软链接模式下，拉取后即生效
 ```
 
 ## 新增一个 Skill
@@ -100,7 +123,11 @@ description: 一句话说明这个 skill 做什么、什么时候该触发。
 ## Roadmap
 
 - [x] 初始化仓库与目录规划
-- [ ] `install.sh` + Claude Code adapter
-- [ ] Codex / Cursor / Trae adapter
-- [ ] MCP 配置统一生成
-- [ ] `validate.sh` + CI 校验
+- [x] `install.sh` 框架 + 公共库（软链/复制/卸载/dry-run/备份）
+- [x] Claude Code / Codex / Cursor adapter：skills、commands、agents、rules
+- [x] `new-skill.sh`、`validate.sh`
+- [ ] Trae adapter（确认 Trae 用户级目录）
+- [ ] MCP：从 `mcp/servers.json` 生成各工具的配置
+- [ ] Claude Code hooks 合并到 settings.json
+- [ ] Cursor 全局 rules 方案
+- [ ] CI 跑 `validate.sh`
