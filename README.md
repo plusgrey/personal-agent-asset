@@ -1,0 +1,106 @@
+# personal-agent-asset
+
+个人 AI Agent 资产仓库：统一维护 skills、commands、subagents、全局规则、MCP 配置等，
+并通过一键脚本安装到 **Claude Code / Codex / Cursor / Trae** 等不同工具中。
+
+## 设计原则
+
+1. **单一源（Single Source of Truth）**：所有资产只在本仓库维护一份，不针对每个工具复制粘贴。
+2. **以开放标准为主格式**：Skill 采用 [Agent Skills](https://agentskills.io) 的 `SKILL.md` 格式，
+   主流工具都已支持或正在支持；全局规则以 `AGENTS.md` 为主格式。
+3. **工具差异集中在 `adapters/`**：各工具的安装路径、格式转换都放在对应 adapter 里，资产本身保持工具无关。
+4. **默认软链接安装**：安装时把资产 symlink 到各工具的配置目录，之后 `git pull` 即可同步更新。
+
+## 目录结构
+
+```
+personal-agent-asset/
+├── README.md
+├── install.sh                  # 一键安装入口：./install.sh [claude|codex|cursor|trae|all]
+│
+├── skills/                     # ⭐ 核心资产：Agent Skills（SKILL.md 标准）
+│   └── <skill-name>/
+│       ├── SKILL.md            # 必需：frontmatter(name, description) + 指令
+│       ├── scripts/            # 可选：skill 调用的脚本
+│       ├── references/         # 可选：按需加载的参考文档
+│       └── assets/             # 可选：模板、静态资源
+│
+├── commands/                   # 斜杠命令 / 可复用 prompt（Markdown）
+│   └── <command-name>.md
+│
+├── agents/                     # Subagent 定义（Markdown + frontmatter）
+│   └── <agent-name>.md
+│
+├── rules/                      # 全局指令 / 个人偏好
+│   ├── AGENTS.md               # 主文件 → CLAUDE.md / AGENTS.md / Cursor rules
+│   └── fragments/              # 可组合的规则片段（编码风格、语言偏好等）
+│
+├── mcp/                        # MCP server 配置（工具无关的统一描述）
+│   └── servers.json            # 密钥用 ${ENV_VAR} 占位，不入库
+│
+├── hooks/                      # 生命周期 hook 脚本（目前主要用于 Claude Code）
+│
+├── adapters/                   # 各工具的安装逻辑与格式转换
+│   ├── claude-code/            # → ~/.claude/{skills,commands,agents,CLAUDE.md}
+│   ├── codex/                  # → ~/.codex/{skills,prompts,AGENTS.md,config.toml}
+│   ├── cursor/                 # → ~/.cursor/{skills,commands,mcp.json} + rules
+│   └── trae/                   # → Trae 对应目录
+│
+└── scripts/                    # 仓库维护工具
+    ├── new-skill.sh            # 从模板创建新 skill
+    └── validate.sh             # 校验 SKILL.md frontmatter 等
+```
+
+> 各工具的具体安装路径以 `adapters/<tool>/` 中的实现为准，工具升级后路径如有变化只需改 adapter。
+
+## 资产映射
+
+| 资产 | Claude Code | Codex | Cursor |
+| --- | --- | --- | --- |
+| `skills/` | `~/.claude/skills/` | `~/.codex/skills/` | `~/.cursor/skills/` |
+| `commands/` | `~/.claude/commands/` | `~/.codex/prompts/` | `~/.cursor/commands/` |
+| `agents/` | `~/.claude/agents/` | — | — |
+| `rules/AGENTS.md` | `~/.claude/CLAUDE.md` | `~/.codex/AGENTS.md` | User Rules / `.cursor/rules/` |
+| `mcp/servers.json` | `claude mcp add` / `~/.claude.json` | `~/.codex/config.toml` | `~/.cursor/mcp.json` |
+| `hooks/` | `~/.claude/settings.json` | — | — |
+
+## 使用方式（规划中）
+
+```bash
+git clone git@github.com:plusgrey/personal-agent-asset.git ~/personal-agent-asset
+cd ~/personal-agent-asset
+
+./install.sh all        # 安装到所有检测到的工具
+./install.sh claude     # 只安装到 Claude Code
+./install.sh --copy     # 用复制代替软链接
+
+git pull                # 软链接模式下，拉取即更新
+```
+
+## 新增一个 Skill
+
+```bash
+./scripts/new-skill.sh my-skill
+# 编辑 skills/my-skill/SKILL.md
+```
+
+`SKILL.md` 最小示例：
+
+```markdown
+---
+name: my-skill
+description: 一句话说明这个 skill 做什么、什么时候该触发。
+---
+
+# My Skill
+
+具体指令……
+```
+
+## Roadmap
+
+- [x] 初始化仓库与目录规划
+- [ ] `install.sh` + Claude Code adapter
+- [ ] Codex / Cursor / Trae adapter
+- [ ] MCP 配置统一生成
+- [ ] `validate.sh` + CI 校验
