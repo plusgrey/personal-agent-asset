@@ -19,11 +19,14 @@ personal-agent-asset/
 ├── install.sh                  # 一键安装入口：./install.sh [claude|codex|cursor|trae|all]
 │
 ├── skills/                     # ⭐ 核心资产：Agent Skills（SKILL.md 标准）
-│   └── <skill-name>/
-│       ├── SKILL.md            # 必需：frontmatter(name, description) + 指令
-│       ├── scripts/            # 可选：skill 调用的脚本
-│       ├── references/         # 可选：按需加载的参考文档
-│       └── assets/             # 可选：模板、静态资源
+│   ├── en/                     # 英文版（默认安装）
+│   │   └── <skill-name>/
+│   └── zh_cn/                  # 简体中文版
+│       └── <skill-name>/
+│           ├── SKILL.md        # 必需：frontmatter(name, description) + 指令
+│           ├── scripts/        # 可选：skill 调用的脚本
+│           ├── references/     # 可选：按需加载的参考文档
+│           └── assets/         # 可选：模板、静态资源
 │
 ├── commands/                   # 斜杠命令 / 可复用 prompt（Markdown）
 │   └── <command-name>.md
@@ -90,8 +93,9 @@ adapter_apply()  {                              # 同步资产
 git clone git@github.com:plusgrey/personal-agent-asset.git ~/personal-agent-asset
 cd ~/personal-agent-asset
 
-./install.sh                # 安装到本机检测到的所有工具（等同 all）
-./install.sh claude codex   # 只安装到指定工具
+./install.sh                # 安装英文 skill 到本机检测到的所有工具（默认 en）
+./install.sh --lang zh_cn   # 改为安装简体中文 skill
+./install.sh --lang en claude codex  # 安装英文版到指定工具
 ./install.sh --dry-run      # 只打印将要执行的操作，不做任何修改
 ./install.sh --copy         # 复制文件，不建软链接
 ./install.sh --uninstall    # 删除本仓库创建的软链接
@@ -103,8 +107,9 @@ git pull                    # 软链接模式下，拉取后即生效
 ## 新增一个 Skill
 
 ```bash
-./scripts/new-skill.sh my-skill
-# 编辑 skills/my-skill/SKILL.md
+./scripts/new-skill.sh my-skill          # 默认新建英文版
+./scripts/new-skill.sh my-skill zh_cn    # 新建简体中文版
+# 编辑 skills/<locale>/my-skill/SKILL.md
 ```
 
 `SKILL.md` 最小示例：

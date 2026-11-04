@@ -20,6 +20,7 @@ Targets:
   all                     every tool detected on this machine (default)
 
 Options:
+  --lang LANG   skill language: en (default) or zh_cn
   --copy        copy files instead of symlinking
   --uninstall   remove symlinks created by this repo
   --dry-run     print actions without changing anything
@@ -28,10 +29,14 @@ Options:
 EOF
 }
 
-MODE=link ACTION=install DRY_RUN=0 FORCE=0
+MODE=link ACTION=install DRY_RUN=0 FORCE=0 ASSET_LANG=en
 targets=""
 while [ $# -gt 0 ]; do
   case "$1" in
+    --lang)
+      [ $# -ge 2 ] || { echo "error: --lang requires en or zh_cn" >&2; exit 1; }
+      ASSET_LANG="$2"; shift ;;
+    --lang=*) ASSET_LANG="${1#*=}" ;;
     --copy) MODE=copy ;;
     --uninstall) ACTION=uninstall ;;
     --dry-run|-n) DRY_RUN=1 ;;
@@ -45,7 +50,12 @@ while [ $# -gt 0 ]; do
   shift
 done
 [ -n "$targets" ] || targets="all"
-export MODE ACTION DRY_RUN FORCE
+case "$ASSET_LANG" in
+  en|zh_cn) ;;
+  *) echo "error: unsupported language '$ASSET_LANG' (choose en or zh_cn)" >&2; exit 1 ;;
+esac
+SKILLS_ROOT="$REPO_ROOT/skills/$ASSET_LANG"
+export MODE ACTION DRY_RUN FORCE ASSET_LANG SKILLS_ROOT
 
 # shellcheck source=lib/common.sh
 . "$REPO_ROOT/lib/common.sh"
@@ -53,7 +63,7 @@ export MODE ACTION DRY_RUN FORCE
 explicit=1
 case " $targets " in *" all "*) targets="$ALL_TOOLS"; explicit=0 ;; esac
 
-info "${C_BOLD}personal-agent-asset${C_RESET}  action=$ACTION mode=$MODE$([ "$DRY_RUN" = 1 ] && echo ' (dry-run)')"
+info "${C_BOLD}personal-agent-asset${C_RESET}  action=$ACTION mode=$MODE language=$ASSET_LANG$([ "$DRY_RUN" = 1 ] && echo ' (dry-run)')"
 
 for tool in $targets; do
   adapter="$REPO_ROOT/adapters/$tool/install.sh"

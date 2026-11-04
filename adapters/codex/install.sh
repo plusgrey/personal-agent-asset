@@ -6,7 +6,7 @@ adapter_name()   { echo "Codex ($(pretty "$CODEX_DIR"))"; }
 adapter_detect() { command -v codex >/dev/null 2>&1 || [ -d "$CODEX_DIR" ]; }
 
 adapter_apply() {
-  info "skills";   sync_children "$REPO_ROOT/skills"   "$CODEX_DIR/skills"
+  info "skills ($ASSET_LANG)"; sync_children "$SKILLS_ROOT" "$CODEX_DIR/skills"
   info "commands"; sync_children "$REPO_ROOT/commands" "$CODEX_DIR/prompts" '*.md'
   info "agents";   skip "subagents not supported by Codex"
   info "rules";    sync_item     "$REPO_ROOT/rules/AGENTS.md" "$CODEX_DIR/AGENTS.md"

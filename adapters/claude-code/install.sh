@@ -6,7 +6,7 @@ adapter_name()   { echo "Claude Code ($(pretty "$CLAUDE_HOME"))"; }
 adapter_detect() { command -v claude >/dev/null 2>&1 || [ -d "$CLAUDE_HOME" ]; }
 
 adapter_apply() {
-  info "skills";   sync_children "$REPO_ROOT/skills"   "$CLAUDE_HOME/skills"
+  info "skills ($ASSET_LANG)"; sync_children "$SKILLS_ROOT" "$CLAUDE_HOME/skills"
   info "commands"; sync_children "$REPO_ROOT/commands" "$CLAUDE_HOME/commands" '*.md'
   info "agents";   sync_children "$REPO_ROOT/agents"   "$CLAUDE_HOME/agents"   '*.md'
   info "rules";    sync_item     "$REPO_ROOT/rules/AGENTS.md" "$CLAUDE_HOME/CLAUDE.md"

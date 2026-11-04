@@ -16,16 +16,19 @@ fm_get() {
 }
 
 echo "skills/"
-for dir in "$REPO_ROOT"/skills/*/; do
-  [ -d "$dir" ] || continue
-  name="$(basename "$dir")"
-  file="$dir/SKILL.md"
-  if [ ! -f "$file" ]; then err "$name: missing SKILL.md"; continue; fi
-  [ "$(head -n1 "$file")" = "---" ] || { err "$name: SKILL.md must start with YAML frontmatter"; continue; }
-  fm_name="$(fm_get "$file" name)"
-  [ "$fm_name" = "$name" ] || err "$name: frontmatter name '$fm_name' must match directory name"
-  [ -n "$(fm_get "$file" description)" ] || err "$name: missing description"
-  echo "  ✓ $name"
+for lang in en zh_cn; do
+  [ -d "$REPO_ROOT/skills/$lang" ] || { err "missing locale directory: skills/$lang"; continue; }
+  for dir in "$REPO_ROOT"/skills/$lang/*/; do
+    [ -d "$dir" ] || continue
+    name="$(basename "$dir")"
+    file="$dir/SKILL.md"
+    if [ ! -f "$file" ]; then err "$lang/$name: missing SKILL.md"; continue; fi
+    [ "$(head -n1 "$file")" = "---" ] || { err "$lang/$name: SKILL.md must start with YAML frontmatter"; continue; }
+    fm_name="$(fm_get "$file" name)"
+    [ "$fm_name" = "$name" ] || err "$lang/$name: frontmatter name '$fm_name' must match directory name"
+    [ -n "$(fm_get "$file" description)" ] || err "$lang/$name: missing description"
+    echo "  ✓ $lang/$name"
+  done
 done
 
 echo "agents/"
