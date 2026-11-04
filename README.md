@@ -16,6 +16,7 @@
 ```
 personal-agent-asset/
 ├── README.md
+├── AGENTS.md                   # 个人通用指令的唯一源文件
 ├── install.sh                  # 一键安装入口：./install.sh [claude|codex|cursor|trae|all]
 │
 ├── skills/                     # ⭐ 核心资产：Agent Skills（SKILL.md 标准）
@@ -33,10 +34,6 @@ personal-agent-asset/
 │
 ├── agents/                     # Subagent 定义（Markdown + frontmatter）
 │   └── <agent-name>.md
-│
-├── rules/                      # 全局指令 / 个人偏好
-│   ├── AGENTS.md               # 主文件 → CLAUDE.md / AGENTS.md / Cursor rules
-│   └── fragments/              # 可组合的规则片段（编码风格、语言偏好等）
 │
 ├── mcp/                        # MCP server 配置（工具无关的统一描述）
 │   └── servers.json            # 密钥用 ${ENV_VAR} 占位，不入库
@@ -66,8 +63,8 @@ personal-agent-asset/
 adapter_name()   { echo "Tool Name"; }          # 展示名
 adapter_detect() { [ -d "$HOME/.tool" ]; }      # 本机是否安装了该工具
 adapter_apply()  {                              # 同步资产
-  sync_children "$REPO_ROOT/skills" "$HOME/.tool/skills"     # 目录下每个子项各建一个链接
-  sync_item     "$REPO_ROOT/rules/AGENTS.md" "$HOME/.tool/AGENTS.md"  # 单个文件
+  sync_children "$SKILLS_ROOT" "$HOME/.tool/skills"       # 当前语言下每个 skill 各建一个链接
+  sync_item     "$REPO_ROOT/AGENTS.md" "$HOME/.tool/AGENTS.md"  # 通用个人指令
 }
 ```
 
@@ -83,9 +80,18 @@ adapter_apply()  {                              # 同步资产
 | `skills/` | `~/.claude/skills/` | `~/.codex/skills/` | `~/.cursor/skills/` |
 | `commands/` | `~/.claude/commands/` | `~/.codex/prompts/` | `~/.cursor/commands/` |
 | `agents/` | `~/.claude/agents/` | — | — |
-| `rules/AGENTS.md` | `~/.claude/CLAUDE.md` | `~/.codex/AGENTS.md` | User Rules / `.cursor/rules/` |
+| 根目录 `AGENTS.md` | `~/.claude/CLAUDE.md` | `~/.codex/AGENTS.md` | 暂不自动安装 |
 | `mcp/servers.json` | `claude mcp add` / `~/.claude.json` | `~/.codex/config.toml` | `~/.cursor/mcp.json` |
 | `hooks/` | `~/.claude/settings.json` | — | — |
+
+## AGENTS.md
+
+根目录 `AGENTS.md` 是个人跨项目通用指令的唯一源文件。安装器按工具的官方约定映射文件名：
+
+- Claude Code：`~/.claude/CLAUDE.md`
+- Codex：`~/.codex/AGENTS.md`
+
+具体项目仍应在各自仓库根目录维护自己的 `AGENTS.md`；大型项目可以在子目录增加更具体的指令。不要把项目构建命令或项目架构写进这里。
 
 ## 使用方式
 

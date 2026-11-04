@@ -9,6 +9,6 @@ adapter_apply() {
   info "skills ($ASSET_LANG)"; sync_children "$SKILLS_ROOT" "$CODEX_DIR/skills"
   info "commands"; sync_children "$REPO_ROOT/commands" "$CODEX_DIR/prompts" '*.md'
   info "agents";   skip "subagents not supported by Codex"
-  info "rules";    sync_item     "$REPO_ROOT/rules/AGENTS.md" "$CODEX_DIR/AGENTS.md"
+  info "instructions"; sync_item "$REPO_ROOT/AGENTS.md" "$CODEX_DIR/AGENTS.md"
   info "mcp";      todo "render mcp/servers.json into [mcp_servers] of $(pretty "$CODEX_DIR")/config.toml"
 }
