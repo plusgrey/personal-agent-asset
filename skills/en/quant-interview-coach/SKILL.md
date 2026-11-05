@@ -22,5 +22,5 @@ Coaching path:
 - Hint 2: write recurrences for states ``, `H`, and `HH`.
 - Grade the derivation, not only the final number; then ask for the general pattern method.
 
-## Notion workflow
-The automation reads existing page blocks recursively, generates novel questions, and appends only unseen questions. Preview safely with `python -m automations.run quant-interview --fixture tests/fixtures/notion_blocks.json`.
+## Automation workflow
+The automation generates question candidates and deduplicates them against its own run history. It does not read or modify external notes. Preview with `python -m automations.run quant-interview --dry-run`.

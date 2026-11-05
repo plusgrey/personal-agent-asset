@@ -30,22 +30,14 @@ class AutomationTests(unittest.TestCase):
             store.save()
             self.assertEqual([], StateStore(Path(tmp), "task").unseen(["same"]))
 
-    def test_live_private_context_requires_explicit_opt_in(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            config = Config(state_dir=Path(tmp), dry_run=True)
-            with self.assertRaisesRegex(RuntimeError, "ALLOW_PRIVATE_CONTEXT"):
-                run_task("quant-interview", config, FakeProvider(), RecordingNotifier())
-
-    def test_fixture_implies_no_notion_write_or_state(self) -> None:
+    def test_quant_interview_dry_run_does_not_persist_state(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             notifier = RecordingNotifier()
-            fixture = Path(__file__).parent / "fixtures" / "notion_blocks.json"
             config = Config(state_dir=Path(tmp), dry_run=True)
-            result = run_task("quant-interview", config, FakeProvider(), notifier, fixture)
-            self.assertFalse(result["notion_appended"])
+            result = run_task("quant-interview", config, FakeProvider(), notifier)
             self.assertFalse(list(Path(tmp).glob("*.json")))
+            self.assertEqual(2, result["new_items"])
             self.assertEqual(1, len(notifier.messages))
-            self.assertNotIn("Expected tosses", notifier.messages[0][1])
 
 
 if __name__ == "__main__":

@@ -12,10 +12,9 @@ on:
         type: choice
         options:
           - research-radar
-          - quant-interview
           - backtest-auditor
       dry_run:
-        description: Skip Notion writes and state persistence
+        description: Skip state persistence
         required: true
         default: true
         type: boolean
@@ -49,12 +48,10 @@ jobs:
       - name: Run automation
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
-          ALLOW_PRIVATE_CONTEXT: ${{ vars.ALLOW_PRIVATE_CONTEXT }}
           NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            for task in research-radar quant-interview backtest-auditor; do
+            for task in research-radar backtest-auditor; do
               python -m automations.run "$task"
             done
           else

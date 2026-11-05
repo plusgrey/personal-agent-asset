@@ -22,4 +22,4 @@ description: 针对概率、统计、市场、编程和建模进行严谨的量�
 - 提示 2：分别为 `空`、`H`、`HH` 写递推式。
 - 评分重点是推导而非只看答案，再追问一般字符串模式的方法。
 
-Notion 自动化会递归读取页面块，只追加未见过的新题。用 `python -m automations.run quant-interview --fixture tests/fixtures/notion_blocks.json` 本地预览。
+自动化会生成候选新题，并与自身运行历史去重；它不会读取或修改外部笔记。可用 `python -m automations.run quant-interview --dry-run` 本地预览。
