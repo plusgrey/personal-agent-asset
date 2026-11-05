@@ -1,0 +1,70 @@
+name: Proactive automations
+
+on:
+  schedule:
+    - cron: "17 1 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Automation to run
+        required: true
+        default: research-radar
+        type: choice
+        options:
+          - research-radar
+          - quant-interview
+          - backtest-auditor
+      dry_run:
+        description: Skip Notion writes and state persistence
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+# State-cache keys are immutable. Serializing runs prevents two live runs from
+# restoring the same snapshot and then racing to publish divergent successors.
+concurrency:
+  group: proactive-automations-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Restore deduplication state
+        uses: actions/cache/restore@v4
+        with:
+          path: automations/state
+          key: automation-state-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            automation-state-${{ github.ref_name }}-
+      - run: pip install -r requirements.txt
+      - name: Run automation
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          ALLOW_PRIVATE_CONTEXT: ${{ vars.ALLOW_PRIVATE_CONTEXT }}
+          NOTIFICATION_WEBHOOK_URL: ${{ secrets.NOTIFICATION_WEBHOOK_URL }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            for task in research-radar quant-interview backtest-auditor; do
+              python -m automations.run "$task"
+            done
+          else
+            dry=""
+            if [ "${{ inputs.dry_run }}" = "true" ]; then dry="--dry-run"; fi
+            python -m automations.run "${{ inputs.task }}" $dry
+          fi
+      - name: Save deduplication state
+        if: ${{ always() && (github.event_name == 'schedule' || inputs.dry_run == false) }}
+        uses: actions/cache/save@v4
+        with:
+          path: automations/state
+          key: automation-state-${{ github.ref_name }}-${{ github.run_id }}

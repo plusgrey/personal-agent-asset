@@ -46,6 +46,35 @@ for f in "$REPO_ROOT"/install.sh "$REPO_ROOT"/lib/*.sh "$REPO_ROOT"/adapters/*/i
 done
 echo "  ✓ syntax"
 
+echo "python"
+if command -v python3 >/dev/null 2>&1; then
+  if ! python3 -m compileall -q "$REPO_ROOT/automations" "$REPO_ROOT/tests"; then
+    err "Python syntax check failed"
+  else
+    echo "  ✓ syntax"
+  fi
+else
+  err "python3 is required for Python syntax checks"
+fi
+
+echo "workflow/config"
+workflow="$REPO_ROOT/.github/workflows/automations.yml"
+[ -f "$workflow" ] || err "missing .github/workflows/automations.yml"
+if [ -f "$workflow" ]; then
+  grep -q '^name:' "$workflow" || err "workflow missing name"
+  grep -q '^on:' "$workflow" || err "workflow missing triggers"
+  grep -q 'workflow_dispatch:' "$workflow" || err "workflow missing manual trigger"
+  grep -q 'schedule:' "$workflow" || err "workflow missing schedule"
+fi
+[ -f "$REPO_ROOT/.env.example" ] || err "missing .env.example"
+[ -f "$REPO_ROOT/requirements.txt" ] || err "missing requirements.txt"
+if command -v ruby >/dev/null 2>&1; then
+  ruby -e 'require "yaml"; YAML.load_file(ARGV[0])' "$workflow" >/dev/null 2>&1 || err "invalid workflow YAML"
+else
+  echo "  - ruby unavailable; skipped YAML parser"
+fi
+echo "  ✓ files"
+
 if [ "$errors" -gt 0 ]; then
   echo "$errors error(s)" >&2
   exit 1

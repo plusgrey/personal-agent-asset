@@ -1,2 +1,8 @@
 .DS_Store
 arxiv-papers/
+.env
+.venv/
+__pycache__/
+*.py[cod]
+automations/state/*
+!automations/state/.gitkeep
